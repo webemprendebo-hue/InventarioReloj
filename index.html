@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Relojes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .total-inventario {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .botones-principales {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+
+        .btn-compra {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        .btn-venta {
+            background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%);
+        }
+
+        .btn-agregar {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .tabla-inventario {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn-modal {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-confirmar {
+            background: #11998e;
+            color: white;
+        }
+
+        .btn-cancelar {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-modal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .stock-bajo {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .stock-medio {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .stock-alto {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            table {
+                font-size: 0.9em;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⌚ Inventario de Relojes</h1>
+        
+        <div class="total-inventario">
+            Total del Inventario: <span id="totalInventario">0</span> Bs
+        </div>
+
+        <div class="botones-principales">
+            <button class="btn btn-compra" onclick="abrirModalCompra()">📦 Comprar</button>
+            <button class="btn btn-venta" onclick="abrirModalVenta()">💰 Vender</button>
+            <button class="btn btn-agregar" onclick="abrirModalAgregar()">➕ Agregar Modelo</button>
+        </div>
+
+        <div class="tabla-inventario">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modelo</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="tablaInventario">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal Compra -->
+    <div id="modalCompra" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📦 Comprar Relojes</h2>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar Modelo:</label>
+                <select id="modeloCompra"></select>
+            </div>
+            <div class="form-group">
+                <label>Cantidad a Comprar:</label>
+                <input type="number" id="cantidadCompra" min="1" value="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirmar" onclick="confirmarCompra()">Confirmar</button>
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalCompra')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Venta -->
+    <div id="modalVenta" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>💰 Vender Relojes</h2>
+            </div>
+            <div class="form-group">
+                <label>Seleccionar Modelo:</label>
+                <select id="modeloVenta"></select>
+            </div>
+            <div class="form-group">
+                <label>Stock Disponible: <span id="stockDisponible">0</span></label>
+            </div>
+            <div class="form-group">
+                <label>Cantidad a Vender:</label>
+                <input type="number" id="cantidadVenta" min="1" value="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirmar" onclick="confirmarVenta()">Confirmar</button>
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalVenta')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Agregar -->
+    <div id="modalAgregar" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>➕ Agregar Nuevo Modelo</h2>
+            </div>
+            <div class="form-group">
+                <label>Nombre del Modelo:</label>
+                <input type="text" id="nuevoModelo" placeholder="Ej: Rolex Submariner">
+            </div>
+            <div class="form-group">
+                <label>Cantidad Inicial:</label>
+                <input type="number" id="nuevaCantidad" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Precio Unitario (Bs):</label>
+                <input type="number" id="nuevoPrecio" min="0" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>Total: <span id="totalNuevo">0</span> Bs</label>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-modal btn-confirmar" onclick="confirmarAgregar()">Agregar</button>
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modalAgregar')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Cargar inventario desde el almacenamiento local o usar datos iniciales
+        function cargarInventario() {
+            const inventarioGuardado = localStorage.getItem('inventarioRelojes');
+            if (inventarioGuardado) {
+                return JSON.parse(inventarioGuardado);
+            } else {
+                // Inventario inicial por defecto
+                return [
+                    { modelo: "Vintage Mujer", cantidad: 9, precioUnitario: 130 },
+                    { modelo: "Vintage de Hombre", cantidad: 18, precioUnitario: 130 },
+                    { modelo: "Clásico Mujer", cantidad: 21, precioUnitario: 50 },
+                    { modelo: "Clásico Hombre", cantidad: 27, precioUnitario: 50 },
+                    { modelo: "G-Shock", cantidad: 14, precioUnitario: 130 },
+                    { modelo: "G-Shock Metálico", cantidad: 3, precioUnitario: 200 },
+                    { modelo: "Rolex Feria", cantidad: 11, precioUnitario: 230 },
+                    { modelo: "Rolex Chino", cantidad: 5, precioUnitario: 90 },
+                    { modelo: "Old Money Grande", cantidad: 5, precioUnitario: 130 },
+                    { modelo: "Old Money Pequeño", cantidad: 5, precioUnitario: 130 },
+                    { modelo: "Old Money Mujer", cantidad: 8, precioUnitario: 130 },
+                    { modelo: "Bulgari", cantidad: 3, precioUnitario: 220 },
+                    { modelo: "Patek", cantidad: 1, precioUnitario: 200 },
+                    { modelo: "Citizen", cantidad: 1, precioUnitario: 180 },
+                    { modelo: "Q&Q Hombre", cantidad: 1, precioUnitario: 160 },
+                    { modelo: "Q&Q Diamante Mujer", cantidad: 1, precioUnitario: 200 },
+                    { modelo: "Q&Q Cuero Mujer", cantidad: 1, precioUnitario: 100 },
+                    { modelo: "Q&Q Mujer China", cantidad: 2, precioUnitario: 60 },
+                    { modelo: "Casio Doble Hora Cuadrado", cantidad: 2, precioUnitario: 130 },
+                    { modelo: "Fase Lunar", cantidad: 1, precioUnitario: 130 },
+                    { modelo: "Vintage Hombre Calidad Baja", cantidad: 5, precioUnitario: 80 },
+                    { modelo: "Hublot", cantidad: 1, precioUnitario: 180 }
+                ];
+            }
+        }
+
+        // Guardar inventario en el almacenamiento local
+        function guardarInventario() {
+            localStorage.setItem('inventarioRelojes', JSON.stringify(inventario));
+        }
+
+        let inventario = cargarInventario();
+
+        function renderizarTabla() {
+            const tbody = document.getElementById('tablaInventario');
+            tbody.innerHTML = '';
+            let totalGeneral = 0;
+
+            inventario.forEach(item => {
+                const total = item.cantidad * item.precioUnitario;
+                totalGeneral += total;
+                
+                let claseStock = 'stock-alto';
+                if (item.cantidad <= 3) claseStock = 'stock-bajo';
+                else if (item.cantidad <= 10) claseStock = 'stock-medio';
+
+                const fila = `
+                    <tr>
+                        <td>${item.modelo}</td>
+                        <td class="${claseStock}">${item.cantidad}</td>
+                        <td>${item.precioUnitario} Bs</td>
+                        <td><strong>${total} Bs</strong></td>
+                    </tr>
+                `;
+                tbody.innerHTML += fila;
+            });
+
+            document.getElementById('totalInventario').textContent = totalGeneral;
+        }
+
+        function cargarSelectModelos() {
+            const selectCompra = document.getElementById('modeloCompra');
+            const selectVenta = document.getElementById('modeloVenta');
+            
+            selectCompra.innerHTML = '';
+            selectVenta.innerHTML = '';
+
+            inventario.forEach((item, index) => {
+                const option1 = document.createElement('option');
+                option1.value = index;
+                option1.textContent = item.modelo;
+                selectCompra.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = index;
+                option2.textContent = `${item.modelo} (Stock: ${item.cantidad})`;
+                selectVenta.appendChild(option2);
+            });
+
+            if (inventario.length > 0) {
+                actualizarStockDisponible();
+            }
+        }
+
+        function abrirModalCompra() {
+            document.getElementById('modalCompra').style.display = 'flex';
+            cargarSelectModelos();
+        }
+
+        function abrirModalVenta() {
+            document.getElementById('modalVenta').style.display = 'flex';
+            cargarSelectModelos();
+        }
+
+        function abrirModalAgregar() {
+            document.getElementById('modalAgregar').style.display = 'flex';
+        }
+
+        function cerrarModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function confirmarCompra() {
+            const indice = document.getElementById('modeloCompra').value;
+            const cantidad = parseInt(document.getElementById('cantidadCompra').value);
+
+            if (cantidad > 0) {
+                inventario[indice].cantidad += cantidad;
+                guardarInventario();
+                renderizarTabla();
+                cerrarModal('modalCompra');
+                alert(`✅ Compra exitosa: ${cantidad} ${inventario[indice].modelo}`);
+            } else {
+                alert('⚠️ Por favor ingresa una cantidad válida');
+            }
+        }
+
+        function confirmarVenta() {
+            const indice = document.getElementById('modeloVenta').value;
+            const cantidad = parseInt(document.getElementById('cantidadVenta').value);
+
+            if (cantidad > 0 && cantidad <= inventario[indice].cantidad) {
+                inventario[indice].cantidad -= cantidad;
+                guardarInventario();
+                renderizarTabla();
+                cerrarModal('modalVenta');
+                alert(`✅ Venta exitosa: ${cantidad} ${inventario[indice].modelo}`);
+            } else if (cantidad > inventario[indice].cantidad) {
+                alert('⚠️ No hay suficiente stock disponible');
+            } else {
+                alert('⚠️ Por favor ingresa una cantidad válida');
+            }
+        }
+
+        function confirmarAgregar() {
+            const modelo = document.getElementById('nuevoModelo').value.trim();
+            const cantidad = parseInt(document.getElementById('nuevaCantidad').value);
+            const precio = parseFloat(document.getElementById('nuevoPrecio').value);
+
+            if (modelo && cantidad > 0 && precio >= 0) {
+                inventario.push({
+                    modelo: modelo,
+                    cantidad: cantidad,
+                    precioUnitario: precio
+                });
+                guardarInventario();
+                renderizarTabla();
+                cerrarModal('modalAgregar');
+                alert(`✅ Modelo agregado: ${modelo}`);
+                
+                document.getElementById('nuevoModelo').value = '';
+                document.getElementById('nuevaCantidad').value = '1';
+                document.getElementById('nuevoPrecio').value = '0';
+            } else {
+                alert('⚠️ Por favor completa todos los campos correctamente');
+            }
+        }
+
+        function actualizarStockDisponible() {
+            const indice = document.getElementById('modeloVenta').value;
+            document.getElementById('stockDisponible').textContent = inventario[indice].cantidad;
+        }
+
+        document.getElementById('modeloVenta').addEventListener('change', actualizarStockDisponible);
+
+        document.getElementById('nuevaCantidad').addEventListener('input', calcularTotalNuevo);
+        document.getElementById('nuevoPrecio').addEventListener('input', calcularTotalNuevo);
+
+        function calcularTotalNuevo() {
+            const cantidad = parseInt(document.getElementById('nuevaCantidad').value) || 0;
+            const precio = parseFloat(document.getElementById('nuevoPrecio').value) || 0;
+            document.getElementById('totalNuevo').textContent = (cantidad * precio).toFixed(2);
+        }
+
+        renderizarTabla();
+    </script>
+</body>
+</html>
